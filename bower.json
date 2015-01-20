@@ -1,0 +1,21 @@
+{
+  "name": "ski-game",
+  "version": "0.0.0",
+  "authors": [
+    "Tomasz Dyl <tomekdyl@gmail.com>"
+  ],
+  "description": "Simple mobile game based on polymer & phonegap",
+  "main": "index.html",
+  "license": "MIT",
+  "private": true,
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ],
+  "dependencies": {
+    "paper-elements": "Polymer/paper-elements#~0.5.2"
+  }
+}

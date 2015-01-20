@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ski Game</title>
+        <link rel="import" href="bower_components/paper-elements/paper-elements.html">
+<!--        <script src="bower_components/platform/platform.js"></script>-->
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="game-buttons">
+            <paper-button class="colored"> Test button </paper-button>
+
+        </div>
+        <canvas id="gamePanel"></canvas>
+        <script>
+            var canvas = document.getElementById('gamePanel');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            var ctx = canvas.getContext('2d');
+            var playersWidth = window.innerWidth / 20;
+            var playersHeight = window.innerWidth / 10;
+
+
+            var getPlayerInitialPosition = function () {
+                var position = {};
+
+                position.x = window.innerWidth / 2;
+                position.y = window.innerHeight * 0.8;
+                position.dir = -1;
+
+                return position;
+            }
+
+
+            var pos = getPlayerInitialPosition();
+            var velocity = 3;
+
+
+            canvas.onclick = function () {
+                pos.dir *= -1;
+            };
+
+            var drawPlayer = function (x, y, dir) {
+                ctx.save();
+                ctx.translate(pos.x, pos.y);
+                ctx.rotate((Math.PI/180)* pos.dir * 45);
+                ctx.fillRect(-playersWidth /2 , -playersHeight /2, playersWidth, playersHeight);
+                ctx.restore();
+            };
+
+            var checkColision = function () {
+
+            };
+
+            var updatePlayerPosition = function (pos) {
+                if (pos.dir < 0 && pos.x <= 0 || pos.dir > 0 && pos.x >= canvas.width) {
+                    pos.dir *= -1;
+                }
+                pos.x += pos.dir * velocity;
+            };
+
+            var update = function () {
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                drawPlayer(pos.x, pos.y);
+                updatePlayerPosition(pos);
+            };
+
+            setInterval(update, 10);
+        </script>
+    </body>
+</html>
