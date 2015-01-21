@@ -22,50 +22,156 @@
 
 
             var getPlayerInitialPosition = function () {
-                var position = {};
+                var player = {};
 
-                position.x = window.innerWidth / 2;
-                position.y = window.innerHeight * 0.8;
-                position.dir = -1;
+                player.posx = window.innerWidth / 2;
+                player.posy = window.innerHeight * 0.8;
+                player.dir = -1;
+                player.rotation = 0;
 
-                return position;
+                return player;
             }
 
 
-            var pos = getPlayerInitialPosition();
-            var velocity = 3;
+            var player = getPlayerInitialPosition();
+            var velocity = 5;
+            var currentHeight = 0;
 
 
             canvas.onclick = function () {
-                pos.dir *= -1;
+                player.dir *= -1;
             };
 
-            var drawPlayer = function (x, y, dir) {
-                ctx.save();
-                ctx.translate(pos.x, pos.y);
-                ctx.rotate((Math.PI/180)* pos.dir * 45);
-                ctx.fillRect(-playersWidth /2 , -playersHeight /2, playersWidth, playersHeight);
-                ctx.restore();
-            };
+
 
             var checkColision = function () {
 
             };
 
+
             var updatePlayerPosition = function (pos) {
-                if (pos.dir < 0 && pos.x <= 0 || pos.dir > 0 && pos.x >= canvas.width) {
-                    pos.dir *= -1;
+                if (player.dir < 0 && player.posx <= 0 || player.dir > 0 && player.posx >= canvas.width) {
+                    player.dir *= -1;
                 }
-                pos.x += pos.dir * velocity;
+                player.posx += player.dir * velocity;
             };
+
+            var updatePlayerRotation = function (player) {
+                if (player.dir < 0 ) {
+                    if (player.rotation > -Math.PI/4) {
+                        player.rotation -= Math.PI/16;
+                    }
+                } else {
+                    if (player.rotation < Math.PI/4) {
+                        player.rotation += Math.PI/16;
+                    }
+                }
+            }
+            var updateLevelPosition = function () {
+
+            }
+
+            var drawPlayer = function (player) {
+                ctx.save();
+                ctx.translate(player.posx, player.posy);
+                ctx.rotate(player.rotation);
+                ctx.fillStyle = '#cce6ea'
+                ctx.fillRect(-playersWidth /2 , -playersHeight/2, playersWidth, playersHeight);
+                ctx.restore();
+            };
+
+            var drawObstacles = [
+                function (x1, x2, y) {
+                    ctx.fillRect(x1, y, x2-x1, 40);
+                }
+            ]
+
+            var drawLevel = function () {
+                var y = 100;
+
+                ctx.save();
+                ctx.fillStyle = '#647f83'
+                for (var i=0; i<5; i++) {
+                    var type = translatedLevel[i][0] -1;
+                    var obstacle1 = translatedLevel[i][1];
+                    var obstacle2 = translatedLevel[i][2];
+
+                    drawObstacles[type](obstacle1[0], obstacle1[1], canvas.height - y);
+
+                    if (obstacle2) {
+                        drawObstacles[type](obstacle2[0], obstacle2[1], canvas.height - y);
+                    }
+
+                    y += 300;
+                }
+                ctx.restore();
+            }
 
             var update = function () {
+                window.requestAnimationFrame(update)
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                drawPlayer(pos.x, pos.y);
-                updatePlayerPosition(pos);
+                updatePlayerPosition(player);
+                updatePlayerRotation(player);
+                updateLevelPosition();
+                drawPlayer(player);
+                drawLevel();
             };
 
-            setInterval(update, 10);
+
+
+            var translateLevel = function (level) {
+                var translatedLvl = [];
+                var translate = function (x) {
+                    return x * window.innerWidth / 100;
+                };
+
+                for (var i=0; i<level.length; i++) {
+                    var type = level[i][0];
+                    var obstacle1 = level[i][1];
+                    var obstacle2 = level[i][2];
+
+                    obstacle1[0] = translate(obstacle1[0]);
+                    obstacle1[1] = translate(obstacle1[1]);
+
+                    if (obstacle2) {
+                        obstacle2[0] = translate(obstacle2[0]);
+                        obstacle2[1] = translate(obstacle2[1]);
+                    }
+
+                    translatedLvl.push([type, obstacle1, obstacle2]);
+                }
+
+                return translatedLvl;
+            };
+
+            // obstacle: [type, [x1, x2], *[x3, x4] ]
+            var lvl = [
+                [1, [0,50], [80,100]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]]
+            ];
+
+            var translatedLevel = translateLevel(lvl);
+            update();
         </script>
     </body>
 </html>
