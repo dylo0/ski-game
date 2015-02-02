@@ -37,10 +37,14 @@
                 return player;
             }
 
-            canvas.onclick = function () {
+//            canvas.onclick = function () {
+//                player.dir *= -1;
+//            };
+            
+            canvas.addEventListener('touchstart', function () {
                 player.dir *= -1;
-            };
-
+            });
+            
             var checkColision = function () {
                 //tbd
             };
@@ -222,7 +226,13 @@
 
             var translatedLevel = translateLevel(lvl);
             var player = initializePlayer();
+            
+            // prevents viewport scrolling
+            document.body.addEventListener('touchmove', function(e){ e.preventDefault(); });
+            
+            // start game loop
             update();
         </script>
+        <script type="text/javascript" src="cordova.js"></script>
     </body>
 </html>

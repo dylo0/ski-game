@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Ski Game</title>
+        <link rel="import" href="bower_components/paper-elements/paper-elements.html">
+<!--        <script src="bower_components/platform/platform.js"></script>-->
+        <link rel="stylesheet" type="text/css" href="style.css">
+    </head>
+    <body>
+        <div class="game-buttons">
+            <paper-button class="colored"> Test button </paper-button>
+
+        </div>
+        <canvas id="gamePanel"></canvas>
+        <script>
+            var canvas = document.getElementById('gamePanel');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            var ctx = canvas.getContext('2d');
+            var playersWidth = window.innerWidth / 20;
+            var playersHeight = window.innerWidth / 10;
+            var velocity = 5;
+            var currentHeight = 0;
+            var currentObstacles = [];
+            var nextObstacleIdx = 0;
+            var levelSpeed = 8;
+
+            var initializePlayer = function () {
+                var player = {};
+
+                player.posx = window.innerWidth / 2;
+                player.posy = window.innerHeight * 0.8;
+                player.dir = -1;
+                player.rotation = 0;
+
+                return player;
+            }
+
+//            canvas.onclick = function () {
+//                player.dir *= -1;
+//            };
+            
+            canvas.addEventListener('touchstart', function () {
+                player.dir *= -1;
+            });
+            
+            var checkColision = function () {
+                //tbd
+            };
+
+
+            var updatePlayerPosition = function (pos) {
+                if (player.dir < 0 && player.posx <= 0 || player.dir > 0 && player.posx >= canvas.width) {
+                    player.dir *= -1;
+                }
+
+                player.posx += player.dir * velocity;
+            };
+
+            var updatePlayerRotation = function (player) {
+                if (player.dir < 0 ) {
+                    if (player.rotation > -Math.PI/4) {
+                        player.rotation -= Math.PI/16;
+                    }
+
+                } else {
+                    if (player.rotation < Math.PI/4) {
+                        player.rotation += Math.PI/16;
+                    }
+                }
+            }
+
+            var updateLevel = function () {
+                currentHeight += 1;
+                if (currentHeight % 60 === 1) {
+
+                    currentObstacles.push({
+                        position: 0,
+                        obstacle: translatedLevel[nextObstacleIdx]
+                    });
+
+                    nextObstacleIdx = (nextObstacleIdx + 1) % lvl.length;
+                }
+
+                ctx.save();
+                ctx.fillStyle = 'rgb(67, 128, 131)';
+
+                for (var i = currentObstacles.length -1 ; i>=0; i--) {
+                    drawObstacle(currentObstacles[i].obstacle, currentObstacles[i].position);
+
+                    var nextObstaclePosition = currentObstacles[i].position + levelSpeed;
+
+                    if (nextObstaclePosition >= canvas.height) {
+                        currentObstacles.splice(i, 1);
+                    } else {
+                        currentObstacles[i].position = nextObstaclePosition;
+                    }
+                }
+
+                ctx.restore();
+            }
+
+
+            // takes single obstacle array element: [type, [x1, x2], *[x3, x4]]
+            // and height on which obstacle should be drawn
+            var drawObstacle = function (obstacle, height) {
+                var type = obstacle[0];
+                var el1 = obstacle[1];
+                var el2 = obstacle[2];
+
+                drawObstacles[type](el1[0], el1[1], height);
+
+                if (el2) {
+                    drawObstacles[type](el2[0], el2[1], height);
+                }
+            }
+
+            // obstacle functions
+            var drawObstacles = [
+                function (x1, x2, y) {
+                    ctx.fillRect(x1, y, x2-x1, 40);
+                },
+
+                function (x1, x2, y) {
+                    ctx.fillRect(x1, y, x2-x1, 100);
+                }
+            ]
+
+            var drawPlayer = function (player) {
+                ctx.save();
+                ctx.translate(player.posx, player.posy);
+                ctx.rotate(player.rotation);
+                ctx.fillStyle = '#cce6ea'
+                ctx.fillRect(-playersWidth /2 , -playersHeight/2, playersWidth, playersHeight);
+                ctx.restore();
+            };
+
+            var drawScore = function () {
+                // TODO move default values out of loop
+                var centerX = canvas.width / 2;
+                var centerY = canvas.height / 2;
+                var radius = canvas.width / 4;
+
+                ctx.beginPath();
+                ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
+                ctx.fillStyle = '#92edf8';
+                ctx.fill();
+
+                ctx.lineWidth = canvas.width / 40;
+                ctx.strokeStyle = '#2d8f9b';
+                ctx.stroke();
+
+                var fontSize = canvas.width / 5;
+                ctx.fillStyle = '#2d8f9b';
+                ctx.font = fontSize + 'px Georgia';
+                ctx.textAlign = 'center';
+                ctx.fillText('1', centerX, centerY + fontSize / 4 );
+            }
+
+            var update = function () {
+                window.requestAnimationFrame(update)
+                ctx.clearRect(0,0, canvas.width, canvas.height);
+                updatePlayerPosition(player);
+                updatePlayerRotation(player);
+                drawScore()
+                drawPlayer(player);
+                updateLevel();
+            };
+
+            // takes level and translates it to fit canvas size
+            var translateLevel = function (level) {
+                var translatedLvl = [];
+                var translate = function (x) {
+                    return x * window.innerWidth / 100;
+                };
+
+                for (var i=0; i<level.length; i++) {
+                    var type = level[i][0];
+                    var obstacle1 = level[i][1];
+                    var obstacle2 = level[i][2];
+
+                    obstacle1[0] = translate(obstacle1[0]);
+                    obstacle1[1] = translate(obstacle1[1]);
+
+                    if (obstacle2) {
+                        obstacle2[0] = translate(obstacle2[0]);
+                        obstacle2[1] = translate(obstacle2[1]);
+                    }
+
+                    translatedLvl.push([type, obstacle1, obstacle2]);
+                }
+
+                return translatedLvl;
+            };
+
+            // obstacle: [type, [x1, x2], *[x3, x4] ]
+            var lvl = [
+                [1, [0,50], [80,100]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [45,100]],
+                [1, [0,  40]],
+                [1, [0,50], [80,100]],
+                [1, [40,100]],
+                [1, [0,  50]],
+                [1, [40,100]],
+                [1, [0,  70]],
+                [1, [30,100]],
+                [1, [0,50], [80,100]],
+                [1, [0,  50]],
+                [1, [40,100]],
+                [1, [0,  30]],
+                [1, [30,100]],
+                [1, [0,50], [80,100]],
+                [1, [0,  40]],
+                [1, [50,100]],
+                [1, [0,  40]],
+                [1, [0,50], [80,100]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]],
+                [1, [0,  50]],
+                [1, [50,100]]
+            ];
+
+            var translatedLevel = translateLevel(lvl);
+            var player = initializePlayer();
+            
+            // prevents viewport scrolling
+            document.body.addEventListener('touchmove', function(e){ e.preventDefault(); });
+            
+            // start game loop
+            update();
+        </script>
+        <script type="text/javascript" src="cordova.js"></script>
+    </body>
+</html>
