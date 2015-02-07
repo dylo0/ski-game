@@ -9,18 +9,18 @@
     <body>
         <div class="game-buttons">
             <paper-button class="colored"> Test button </paper-button>
-
         </div>
+
         <canvas id="gamePanel"></canvas>
         <script>
             var canvas = document.getElementById('gamePanel');
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
-
-            var ctx = canvas.getContext('2d');
-            var velocity = 5;
             var currentHeight = 0;
             var currentObstacles = [];
+            var currentScore = 0;
+            var ctx = canvas.getContext('2d');
+            var velocity = 5;
             var nextObstacleIdx = 0;
             var levelSpeed = 8;
 
@@ -37,32 +37,49 @@
                 return player;
             }
             
+            var startNewGame = function () {
+                currentHeight = 0;
+                currentObstacles = [];
+                currentScore = 0;
+            }
+
+            var endGame = function () {
+                while (currentObstacles.length > 0) {
+                    currentObstacles.pop();
+                }
+
+                startNewGame();
+            }
+
             canvas.addEventListener('touchstart', function () {
                 player.dir *= -1;
             });
             
-            var isColliding = function (a, b) {
-                return !(
-                    ((a.posyy + a.height) < (b.y)) ||
-                    (a.posy > (b.y + b.height)) ||
-                    ((a.posx + a.width) < b.x) ||
-                    (a.posx > (b.x + b.width))
-                );
+            var isColliding = function (player, ob, obPosition, obHeight) {
+                if ( player.posy >= obPosition && (player.posy - player.height/2) > (obPosition + obHeight)  ||
+                    player.posy < obPosition && (player.posy + player.height/2) < obPosition)
+                {
+
+                } else {
+                    if (player.posx - player.width/2 > ob[0] && player.posx + player.width /2 < ob[1]) {
+                        endGame();
+                    }
+                }
             };
             
             var checkColisions = function () {
                 
                 for (var i=0; i<currentObstacles.length; i++) {
-                    var ob1 = currentObstacles[i][0];
-                    var ob2 = currentObstacles[i][1];
+                    var current = currentObstacles[i];
+                    var ob1 = current.obstacle[1];
+                    var ob2 = current.obstacle[2];
+                    var obPos = current.position
                     
-                    console.log(ob1, ob2);
-                    
-                    if (isColliding(player, ob1)) {
+                    if (isColliding(player, ob1, obPos, current.height)) {
                         console.log('collision detected');
                     }
                     
-                    if (ob2 && isColliding(player, ob2) ) {
+                    if (ob2 && isColliding(player, ob2, obPos, current.height) ) {
                         console.log('collision detected');
                     }
                 }
@@ -92,16 +109,22 @@
 
             var updateLevel = function () {
                 currentHeight += 1;
+
+                //temp
+                currentScore += 1;
+
                 if (currentHeight % 60 === 1) {
+                    var newObstacle = translatedLevel[nextObstacleIdx];
 
                     currentObstacles.push({
                         position: 0,
-                        obstacle: translatedLevel[nextObstacleIdx]
+                        height: obstacleParams[newObstacle[0]].height,
+                        obstacle: newObstacle
                     });
-
+//                    console.log(currentObstacles);
                     nextObstacleIdx = (nextObstacleIdx + 1) % lvl.length;
                     
-                    console.log(currentObstacles, currentHeight);
+//                    console.log(currentObstacles, currentHeight);
                 }
 
                 ctx.save();
@@ -194,8 +217,12 @@
                 ctx.fillStyle = '#2d8f9b';
                 ctx.font = fontSize + 'px Georgia';
                 ctx.textAlign = 'center';
-                ctx.fillText('1', centerX, centerY + fontSize / 4 );
+                ctx.fillText(currentScore, centerX, centerY + fontSize / 4 );
                 ctx.restore();
+            }
+
+            var updateScore = function () {
+
             }
 
             var update = function () {
@@ -203,6 +230,8 @@
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 updatePlayerPosition(player);
                 updatePlayerRotation(player);
+                updateScore();
+                checkColisions();
                 drawScore()
                 drawPlayer(player);
                 updateLevel();
@@ -271,6 +300,7 @@
             document.body.addEventListener('touchmove', function(e){ e.preventDefault(); });
             
             // start game loop
+            startNewGame();
             update();
         </script>
         <script type="text/javascript" src="cordova.js"></script>
