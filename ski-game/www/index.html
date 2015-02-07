@@ -7,11 +7,21 @@
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
     <body>
-        <div class="game-buttons">
-            <paper-button class="colored"> Test button </paper-button>
-
-        </div>
         <canvas id="gamePanel"></canvas>
+        <!-- <div class="game-buttons">
+            <paper-button class="colored" id="menu"> Test button </paper-button>
+
+        </div> -->
+        <div id="menu"> Test button </div>
+        <script>
+            var gameMainLoop = true;
+            document.getElementById('menu').addEventListener('click', function(){
+                var timeDelay=gameMainLoop?0:200;
+                document.body.className = gameMainLoop? "menu":"";
+
+                setTimeout(function(){gameMainLoop=!gameMainLoop;},timeDelay);
+            });
+        </script>
         <script>
             var canvas = document.getElementById('gamePanel');
             canvas.width = window.innerWidth;
@@ -28,9 +38,9 @@
                 var player = {};
 
                 player.width = window.innerWidth / 20;
-                player.height = window.innerWidth / 10;
-                player.posx = window.innerWidth / 2;
-                player.posy = window.innerHeight * 0.8;
+                player.height = player.width * 2;
+                player.posx = (window.innerWidth - player.width) / 2;
+                player.posy = (window.innerHeight - player.height) * 0.9;
                 player.dir = -1;
                 player.rotation = 0;
 
@@ -199,7 +209,8 @@
             }
 
             var update = function () {
-                window.requestAnimationFrame(update)
+                window.requestAnimationFrame(update);
+                if(!gameMainLoop) return;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 updatePlayerPosition(player);
                 updatePlayerRotation(player);

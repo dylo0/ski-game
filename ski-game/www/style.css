@@ -1,8 +1,18 @@
 html, body {
-    height: 100%;
+    /*height: 100%;*/
     margin: 0;
     background-color: #28cbe0;
     font-family: 'RobotoDraft', sans-serif;
+    width:100vw;
+    height:100vh;
+    overflow: hidden;
+    position: fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
 }
 
 .colored {
@@ -16,4 +26,50 @@ html, body {
 .game-buttons {
     position: fixed;
     width: 100%;
+}
+#menu{
+    position: fixed;
+    top:0;
+    left:0;
+    width:20vw;
+    height:10vh;
+    background-color: yellow;
+    color: black;
+    font-size: 4vw;
+    z-index: 9999999999999;
+    opacity: 0.99;
+	-webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.2s;
+	transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.2s;
+}
+
+
+canvas{
+    width:100vw;
+    height:100vh;
+    overflow: hidden;
+    position: fixed;
+    top:0;
+    left:0;
+    right:0;
+    bottom: 0;
+    margin: 0;
+    padding: 0;
+    z-index: 1;
+	-webkit-transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.2s;
+	transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.2s;
+}
+
+.menu #menu{
+	height: 50vh;
+	width: 50vw;
+	left:25vw;
+	right:25vw;
+	top:25vh;
+	bottom: 25vh;
+	text-align: center;
+	background-color: orange;
+}
+.menu canvas{
+/*	top:50vh;
+    bottom: -50vh;*/
 }
