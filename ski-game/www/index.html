@@ -6,16 +6,26 @@
 <!--        <script src="bower_components/platform/platform.js"></script>-->
         <link rel="stylesheet" type="text/css" href="style.css">
     </head>
-    <body>
+    <body class="menu">
         <canvas id="gamePanel"></canvas>
         <!-- <div class="game-buttons">
             <paper-button class="colored" id="menu"> Test button </paper-button>
 
         </div> -->
-        <div id="menu"> Test button </div>
+        <div id="menu">
+            <div class="mini">menu</div>
+            <span id="bestScore">best score: </span>
+            <img class="logo" src="img/menu/logo.png" alt="" />
+            <img id="play" class="play" src="img/menu/play.png" alt="" />
+            <img class="social" src="img/menu/social.png" alt="" />
+            <img class="credits" src="img/menu/credits.png" alt="" />
+        </div>
+        <div id="crash">
+            Samolot na Elbrus
+        </div>
         <script>
-            var gameMainLoop = true;
-            document.getElementById('menu').addEventListener('click', function(){
+            var gameMainLoop = false;
+            document.getElementById('play').addEventListener('click', function(){
                 var timeDelay=gameMainLoop?0:200;
                 document.body.className = gameMainLoop? "menu":"";
 
@@ -37,9 +47,21 @@
             var eggImg = new Image();
             var treeImg = new Image();
             var snowImg = new Image();
+            var eggDeath = {count:44,img:[]};
+            var i;
+            var death = 0;
+            var deathMP3 = new Audio("sound/death.mp3"); // buffers automatically when created
+            var bestScore = 0;
+
             eggImg.src='img/egg.png';
             treeImg.src='img/tree.png';
             snowImg.src='img/snow.jpg';
+
+            for(i=1;i<=eggDeath.count;i++) {
+                var newImg = new Image();
+                newImg.src='img/death/'+Math.floor(i/2)+'.png';
+                eggDeath.img.push(newImg);
+            }
 
             var initializePlayer = function () {
                 var player = {};
@@ -55,18 +77,25 @@
             }
             
             var startNewGame = function () {
+                bestScore = parseInt(localStorage.getItem("bestScore"));
+                if(bestScore<currentScore) {
+                    localStorage.setItem("bestScore", currentScore);
+                    bestScore=currentScore;
+                }
+                document.getElementById('bestScore').innerHTML='best score: '+bestScore;
                 currentHeight = 0;
                 currentObstacles = [];
                 currentScore = 0;
                 levelMetter=0;
+                death=0;
+                levelSpeed=8;
             }
 
             var endGame = function () {
-                while (currentObstacles.length > 0) {
-                    currentObstacles.pop();
+                if(!death){
+                    death = 1;
+                    levelSpeed=0;
                 }
-
-                startNewGame();
             }
 
             canvas.addEventListener('touchstart', function () {
@@ -226,7 +255,19 @@
                 ctx.save();
                 ctx.translate(player.x, player.y);
                 ctx.rotate(player.rotation); 
-                ctx.drawImage(eggImg, -(eggImg.width/2), -(eggImg.height/2));
+                if(death){
+                    if(death===1)deathMP3.play();
+                    death++;
+                    if(eggDeath.count<=death){
+                        //document.getElementById('play').click();
+                        document.body.className = 'crash';
+                        //startNewGame();
+                    } else {
+                        ctx.drawImage(eggDeath.img[death], -(eggImg.width/2), -(eggImg.height/2));
+                    }
+                }else {
+                    ctx.drawImage(eggImg, -(eggImg.width/2), -(eggImg.height/2));
+                }
                 ctx.restore();   
             };
 
@@ -255,7 +296,7 @@
             };
 
             var updateScore = function () {
-                currentScore=Math.floor((levelMetter-200)/(levelSpeed*120));
+                currentScore=Math.floor((levelMetter-200)/(8*120));
                 if(currentScore<0)currentScore=0;
             };
 
@@ -263,8 +304,8 @@
                 window.requestAnimationFrame(update);
                 if(!gameMainLoop) return;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                updatePlayerPosition(player);
-                updatePlayerRotation(player);
+                if(!death)updatePlayerPosition(player);
+                if(!death)updatePlayerRotation(player);
                 drawSnow(levelMetter % 1920 - 1920);
                 updateScore();
                 checkColisions();
