@@ -1,0 +1,21 @@
+<polymer-element name="ingame-menu">
+    <template>
+        <paper-fab id="menu" on-tap="{{ toggleGameMenu }}" icon="add"></paper-fab>
+
+        <paper-dialog heading="Dialog Title" transition="core-transition-center">
+              <p>Some content</p>
+        </paper-dialog>
+
+        <content></content>
+    </template>
+
+    <script>
+    Polymer({
+        toggleGameMenu: function (event, detail, sender) {
+            console.log(event, detail, sender);
+            console.log('menu clicked');
+        }
+    });
+
+    </script>
+</polymer-element>
