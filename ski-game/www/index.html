@@ -29,38 +29,65 @@
                 var timeDelay=gameMainLoop?0:200;
                 document.body.className = gameMainLoop? "menu":"";
 
-                setTimeout(function(){gameMainLoop=!gameMainLoop;},timeDelay);
+                setTimeout(function(){gameMainLoop=!gameMainLoop;}, timeDelay);
             });
         </script>
+
         <script>
-            var canvas = document.getElementById('gamePanel');
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-            var currentHeight = 0;
-            var currentObstacles = [];
-            var currentScore = 0;
-            var ctx = canvas.getContext('2d');
+            var crash;
+            var currentHeight;
+            var currentScore;
+            var nextObstacleIdx;
+            var levelPosition;
+            var levelSpeed;
+            var currentObstacles;
+
+
+
+            ////////////////
+            /// CONFIG
+            ////////////////
+
             var velocity = 5;
-            var nextObstacleIdx = 0;
-            var levelSpeed = 8;
-            var levelMetter = 0;
+            var initialLevelSpeed = 8;
+
+
+
+            ////////////////
+            /// ASSETS
+            ////////////////
+
             var eggImg = new Image();
             var treeImg = new Image();
             var snowImg = new Image();
-            var eggDeath = {count:44,img:[]};
-            var i;
-            var death = 0;
-            var deathMP3 = new Audio("sound/death.mp3"); // buffers automatically when created
-            var bestScore = 0;
+            var eggcrash = {count:44,img:[]};
+            eggImg.src = 'img/egg.png';
+            treeImg.src = 'img/tree.png';
+            snowImg.src = 'img/snow.jpg';
 
-            eggImg.src='img/egg.png';
-            treeImg.src='img/tree.png';
-            snowImg.src='img/snow.jpg';
-
-            for(i=1;i<=eggDeath.count;i++) {
+            for(i=1; i<=eggcrash.count; i++) {
                 var newImg = new Image();
-                newImg.src='img/death/'+Math.floor(i/2)+'.png';
-                eggDeath.img.push(newImg);
+                newImg.src='img/crash/'+Math.floor(i/2)+'.png';
+                eggcrash.img.push(newImg);
+            }
+
+            var crashMP3 = new Audio("sound/crash.mp3"); // buffers automatically when created
+
+
+
+            //////////////////////
+            /// INITIALIZE
+            //////////////////////
+
+            var canvas = document.getElementById('gamePanel');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            var ctx = canvas.getContext('2d');
+
+            var bestScore = window.localStorage.getItem('bestScore');
+            if (!bestScore) {
+                bestScore = 0;
+                window.localStorage.setItem('bestScore', 0);
             }
 
             var initializePlayer = function () {
@@ -76,25 +103,34 @@
                 return player;
             }
             
+
+
+            //////////////////////
+            /// CORE LOGIC
+            //////////////////////
+
             var startNewGame = function () {
-                bestScore = parseInt(window.localStorage.getItem("bestScore"));
-                if(bestScore<currentScore) {
-                    window.localStorage.setItem("bestScore", currentScore);
-                    bestScore=currentScore;
-                }
-                document.getElementById('bestScore').innerHTML='best score: '+bestScore;
-                currentHeight = 0;
+                document.getElementById('bestScore').innerHTML = 'best score: ' + window.localStorage.getItem('bestScore');
                 currentObstacles = [];
+                levelSpeed= initialLevelSpeed;
+                currentHeight = 0;
                 currentScore = 0;
-                levelMetter=0;
-                death=0;
-                levelSpeed=8;
+                nextObstacleIdx = 0;
+                levelPosition=0;
+                crash=0;
             }
 
             var endGame = function () {
-                if(!death){
-                    death = 1;
+                var bestScore = parseInt(window.localStorage.getItem("bestScore"));
+
+                if (!crash) {
+                    crash = 1;
                     levelSpeed=0;
+                }
+
+                if (bestScore < currentScore) {
+                    window.localStorage.setItem("bestScore", currentScore);
+                    bestScore=currentScore;
                 }
             }
 
@@ -102,93 +138,11 @@
                 player.dir *= -1;
             });
 
+
             
-            var isColliding = function (player, ob, obPosition, obHeight) {
-                return !(
-                    //above
-                    player.y >= obPosition && (player.y - player.height/2) > (obPosition + obHeight)  ||
-                    //below
-                    player.y < obPosition && (player.y + player.height/2) < obPosition ||
-                    //right
-                    player.x > ob[0] && player.x - player.width /2 > ob[1] ||
-                    //left
-                    player.x < ob[1] && player.x + player.width /2 < ob[0]
-                );
-            };
-            
-            var checkColisions = function () {
-                for (var i=0; i < currentObstacles.length; i++) {
-                    var current = currentObstacles[i];
-                    var ob = current.obstacle;
-                    var obPos = current.position
-                    
-                    if (isColliding(player, ob[1], obPos, current.height)  ||
-                        ob[2] && isColliding(player, ob[2], obPos, current.height)) {
-                        endGame();
-                    }
-                }
-            };
-
-
-            var updatePlayerPosition = function (pos) {
-                if (player.dir < 0 && player.x <= 0 || player.dir > 0 && player.x >= canvas.width) {
-                    player.dir *= -1;
-                }
-
-                player.x += player.dir * velocity;
-            };
-
-            var updatePlayerRotation = function (player) {
-                if (player.dir < 0 ) {
-                    if (player.rotation > -Math.PI/4) {
-                        player.rotation -= Math.PI/16;
-                    }
-
-                } else {
-                    if (player.rotation < Math.PI/4) {
-                        player.rotation += Math.PI/16;
-                    }
-                }
-            }
-
-            var updateLevel = function () {
-                currentHeight += 1;
-                levelMetter+=levelSpeed;
-                //temp
-                //currentScore += 1;
-
-                if (currentHeight % 120 === 1) {
-                    var newObstacle = translatedLevel[nextObstacleIdx];
-
-                    currentObstacles.push({
-                        position: 0,
-                        height: obstacleParams[newObstacle[0]].height,
-                        obstacle: newObstacle
-                    });
-//                    console.log(currentObstacles);
-                    nextObstacleIdx = (nextObstacleIdx + 1) % lvl.length;
-                    
-//                    console.log(currentObstacles, currentHeight);
-                }
-
-                ctx.save();
-                //ctx.fillStyle = 'rgb(67, 128, 131)';
-
-                for (var i = currentObstacles.length -1 ; i>=0; i--) {
-                    drawObstacle(currentObstacles[i].obstacle, currentObstacles[i].position);
-
-                    var nextObstaclePosition = currentObstacles[i].position + levelSpeed;
-
-                    if (nextObstaclePosition >= canvas.height) {
-                        currentObstacles.splice(i, 1);
-                    } else {
-                        currentObstacles[i].position = nextObstaclePosition;
-                    }
-                }
-
-                ctx.restore();
-            }
-
+            //////////////////////
+            /// DRAWING FUNCTIONS
+            //////////////////////
 
             // takes single obstacle array element: [type, [x1, x2], *[x3, x4]]
             // and height on which obstacle should be drawn
@@ -209,8 +163,8 @@
                 ctx.drawImage(snowImg, 0, 0);
                 ctx.restore();
             }
-            // obstacle functions
-            obstacleParams = [
+
+            var obstacleParams = [
                 {height: 197},
                 {height: 197}
             ];
@@ -237,15 +191,15 @@
                 ctx.save();
                 ctx.translate(player.x, player.y);
                 ctx.rotate(player.rotation); 
-                if(death){
-                    if(death===1)deathMP3.play();
-                    death++;
-                    if(eggDeath.count<=death){
+                if(crash){
+                    if(crash===1)crashMP3.play();
+                    crash++;
+                    if(eggcrash.count<=crash){
                         //document.getElementById('play').click();
                         document.body.className = 'crash';
                         //startNewGame();
                     } else {
-                        ctx.drawImage(eggDeath.img[death], -(eggImg.width/2), -(eggImg.height/2));
+                        ctx.drawImage(eggcrash.img[crash], -(eggImg.width/2), -(eggImg.height/2));
                     }
                 }else {
                     ctx.drawImage(eggImg, -(eggImg.width/2), -(eggImg.height/2));
@@ -277,8 +231,93 @@
                 ctx.restore();
             };
 
+
+            ////////////////////
+            /// STATE UPDATE
+            ////////////////////
+
+            var isColliding = function (player, ob, obPosition, obHeight) {
+                return !(
+                    //above
+                    player.y >= obPosition && (player.y - player.height/2) > (obPosition + obHeight)  ||
+                    //below
+                    player.y < obPosition && (player.y + player.height/2) < obPosition ||
+                    //right
+                    player.x > ob[0] && player.x - player.width /2 > ob[1] ||
+                    //left
+                    player.x < ob[1] && player.x + player.width /2 < ob[0]
+                );
+            };
+
+            var checkColisions = function () {
+                for (var i=0; i < currentObstacles.length; i++) {
+                    var current = currentObstacles[i];
+                    var ob = current.obstacle;
+                    var obPos = current.position
+
+                    if (isColliding(player, ob[1], obPos, current.height)  ||
+                        ob[2] && isColliding(player, ob[2], obPos, current.height)) {
+                        endGame();
+                    }
+                }
+            };
+
+            var updatePlayerPosition = function (pos) {
+                if (player.dir < 0 && player.x <= 0 || player.dir > 0 && player.x >= canvas.width) {
+                    player.dir *= -1;
+                }
+
+                player.x += player.dir * velocity;
+            };
+
+            var updatePlayerRotation = function (player) {
+                if (player.dir < 0 ) {
+                    if (player.rotation > -Math.PI/4) {
+                        player.rotation -= Math.PI/16;
+                    }
+
+                } else {
+                    if (player.rotation < Math.PI/4) {
+                        player.rotation += Math.PI/16;
+                    }
+                }
+            }
+
+            var updateLevel = function () {
+                currentHeight += 1;
+                levelPosition+=levelSpeed;
+
+                if (currentHeight % 120 === 1) {
+                    var newObstacle = translatedLevel[nextObstacleIdx];
+
+                    currentObstacles.push({
+                        position: 0,
+                        height: obstacleParams[newObstacle[0]].height,
+                        obstacle: newObstacle
+                    });
+                    nextObstacleIdx = (nextObstacleIdx + 1) % lvl.length;
+                }
+
+                ctx.save();
+
+                for (var i = currentObstacles.length -1 ; i>=0; i--) {
+                    drawObstacle(currentObstacles[i].obstacle, currentObstacles[i].position);
+
+                    var nextObstaclePosition = currentObstacles[i].position + levelSpeed;
+
+                    if (nextObstaclePosition >= canvas.height) {
+                        currentObstacles.splice(i, 1);
+                    } else {
+                        currentObstacles[i].position = nextObstaclePosition;
+                    }
+                }
+
+                ctx.restore();
+            }
+
+
             var updateScore = function () {
-                currentScore=Math.floor((levelMetter-200)/(8*120));
+                currentScore=Math.floor((levelPosition-200)/(8*120));
                 if(currentScore<0)currentScore=0;
             };
 
@@ -286,15 +325,20 @@
                 window.requestAnimationFrame(update);
                 if(!gameMainLoop) return;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
-                if(!death)updatePlayerPosition(player);
-                if(!death)updatePlayerRotation(player);
-                drawSnow(levelMetter % 1920 - 1920);
+                if(!crash)updatePlayerPosition(player);
+                if(!crash)updatePlayerRotation(player);
+                drawSnow(levelPosition % 1920 - 1920);
                 updateScore();
                 checkColisions();
                 drawScore()
                 drawPlayer(player);
                 updateLevel();
             };
+
+
+            //////////////////////
+            /// LEVEL PREPARATION
+            //////////////////////
 
             // takes level and translates it to fit canvas size
             var translateLevel = function (level) {
