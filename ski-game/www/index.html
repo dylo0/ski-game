@@ -77,9 +77,9 @@
             }
             
             var startNewGame = function () {
-                bestScore = parseInt(localStorage.getItem("bestScore"));
+                bestScore = parseInt(window.localStorage.getItem("bestScore"));
                 if(bestScore<currentScore) {
-                    localStorage.setItem("bestScore", currentScore);
+                    window.localStorage.setItem("bestScore", currentScore);
                     bestScore=currentScore;
                 }
                 document.getElementById('bestScore').innerHTML='best score: '+bestScore;
@@ -101,48 +101,30 @@
             canvas.addEventListener('touchstart', function () {
                 player.dir *= -1;
             });
-            
-            // function valueInRange(value, min, max){ 
-            //     return (value >= min) && (value <= max); 
-            // }
 
-            // var isColliding = function (A, B){
-            //     var xOverlap = valueInRange(A.x, B.x, B.x + B.width) ||
-            //                     valueInRange(B.x, A.x, A.x + A.width);
-
-            //     var yOverlap = valueInRange(A.y, B.y, B.y + B.height) ||
-            //                     valueInRange(B.y, A.y, A.y + A.height);
-
-            //     return xOverlap && yOverlap; //endGame();
-            // };
             
             var isColliding = function (player, ob, obPosition, obHeight) {
-                if ( player.y >= obPosition && (player.y - player.height/2) > (obPosition + obHeight)  ||
-                    player.y < obPosition && (player.y + player.height/2) < obPosition)
-                {
-
-                } else {
-                    if (player.x - player.width/2 > ob[0] && player.x + player.width /2 < ob[1]) {
-                        console.log('a');
-                        endGame();
-                    }
-                }
+                return !(
+                    //above
+                    player.y >= obPosition && (player.y - player.height/2) > (obPosition + obHeight)  ||
+                    //below
+                    player.y < obPosition && (player.y + player.height/2) < obPosition ||
+                    //right
+                    player.x > ob[0] && player.x - player.width /2 > ob[1] ||
+                    //left
+                    player.x < ob[1] && player.x + player.width /2 < ob[0]
+                );
             };
             
             var checkColisions = function () {
-                
-                for (var i=0; i<currentObstacles.length; i++) {
+                for (var i=0; i < currentObstacles.length; i++) {
                     var current = currentObstacles[i];
-                    var ob1 = current.obstacle[1];
-                    var ob2 = current.obstacle[2];
+                    var ob = current.obstacle;
                     var obPos = current.position
                     
-                    if (isColliding(player, ob1, obPos, current.height)) {
-                        console.log('collision detected');
-                    }
-                    
-                    if (ob2 && isColliding(player, ob2, obPos, current.height) ) {
-                        console.log('collision detected');
+                    if (isColliding(player, ob[1], obPos, current.height)  ||
+                        ob[2] && isColliding(player, ob[2], obPos, current.height)) {
+                        endGame();
                     }
                 }
             };
