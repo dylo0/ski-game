@@ -1,3 +1,7 @@
+@font-face {
+    font-family: blanch;
+    src: url('fonts/blanch_caps.otf');
+}
 html, body {
     /*height: 100%;*/
     margin: 0;
@@ -29,7 +33,7 @@ html, body {
     width: 100%;
 }
 
-#menu, #crash {
+#menu, #crash, #credits {
     position: fixed;
     top:0;
     right:0;
@@ -48,7 +52,7 @@ html, body {
     overflow: hidden;
     background-repeat: no-repeat;
 }
-#menu {
+#menu, #credits{
     background-color: #66ccff;
 }
 #crash {
@@ -72,14 +76,17 @@ canvas {
 	transition:all cubic-bezier(0.250, 0.460, 0.450, 0.940) 0.2s;
 }
 
-.menu #menu, .crash #crash {
+.menu #menu, .crash #crash, .credits #credits {
 	height: 100vh;
 	width: 100vw;
 	right:0;
 	top:0;
 	bottom:0;
-
 }
+
+/*#credits{
+    background-color: #fff;
+}*/
 
 .menu canvas {
 /*  top:50vh;
@@ -89,7 +96,7 @@ canvas {
 .menu .mini, #menu img {
     display: none;
 }
-.menu #menu{
+.menu #menu,.credits #credits{
     background-image: url('img/menu/menu.png');
 }
 .menu #menu img {
@@ -105,6 +112,14 @@ canvas {
     -webkit-transform:translate(-50%,-50%);
     transform:translate(-50%,-50%);
 }
+.replay{
+    position: absolute;
+    display: block;
+    bottom:10vh;
+    left:50%;
+    -webkit-transform:translateX(-50%);
+    transform:translateX(-50%);
+}
 .credits{
     position: absolute;
     bottom: 5vh;
@@ -119,6 +134,51 @@ canvas {
     position: absolute;
     top: 10vh;
     left: 50%;
+    width: 80%;
     -webkit-transform:translateX(-50%);
     transform:translateX(-50%);
+}
+div.credits{
+    position: absolute;
+    text-align: center;
+    top: 45%;
+    left: 0;
+    width: 100%;
+    -webkit-transform:translateY(-50%);
+    transform:translateY(-50%);
+    font-family: blanch;
+    font-size: 150px;
+    color: white;
+    text-shadow: 7px 7px rgba(0,0,0,0.5);
+    z-index: 99999999999999;
+}
+#score{
+    position: absolute;
+    font-family: blanch;
+    font-size: 250px;
+    color: white;
+    text-shadow: 10px 10px rgba(0,0,0,0.5);
+    text-align: center;
+    width: 100vw;
+    top: 25%;
+}
+.goToMenu{
+    position: absolute;
+    top: 10vh;
+    left: 10vw;
+    width:76px;
+    height:76px;
+}
+#bestScore{
+    position: fixed;
+    top: 0;
+    right: 0;
+    font-family: blanch;
+    font-size: 50px;
+    color: black;
+    text-shadow: 3px 3px rgba(255,255,255,.5);
+    z-index: 99999999999999;
+}
+.credits #bestScore{
+    display: none;
 }

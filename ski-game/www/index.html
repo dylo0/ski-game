@@ -2,35 +2,58 @@
 <html>
     <head>
         <title>Ski Game</title>
-        <link rel="import" href="bower_components/paper-elements/paper-elements.html">
+<!--         <link rel="import" href="bower_components/paper-elements/paper-elements.html"> -->
 <!--        <script src="bower_components/platform/platform.js"></script>-->
         <link rel="stylesheet" type="text/css" href="style.css">
+        <script type="text/javascript" src="cordova.js"></script>
     </head>
     <body class="menu">
         <canvas id="gamePanel"></canvas>
-        <!-- <div class="game-buttons">
-            <paper-button class="colored" id="menu"> Test button </paper-button>
-
-        </div> -->
         <div id="menu">
             <div class="mini">menu</div>
-            <span id="bestScore">best score: </span>
             <img class="logo" src="img/menu/logo.png" alt="" />
             <img id="play" class="play" src="img/menu/play.png" alt="" />
-            <img class="social" src="img/menu/social.png" alt="" />
-            <img class="credits" src="img/menu/credits.png" alt="" />
+            <img class="social" usemap="social" src="img/menu/social.png" alt="" />
+            <img class="credits" id="btnCredits" src="img/menu/credits.png" alt="" />
+            <map name="social">
+                <area shape="rect" coords="0,0,85,62" href="fb/" alt="Facebook" target="_blank" />
+                <area shape="rect" coords="85,0,190,62" href="twitter/" alt="Twitter" target="_blank" />
+            </map>
         </div>
         <div id="crash">
-            Samolot na Elbrus
+            <img id="replay" class="replay" src="img/score/replay.png" alt="" />
+            <img class="social" usemap="social" src="img/menu/social.png" alt="" />
+            <img class="goToMenu" id="goToMenu" src="img/score/menu.png" alt="" />
+            <div id="score">score: </div>
         </div>
+        <div id="credits">
+            <div class="credits">
+                Tomasz Dyl<br/>
+                Kamil Przeorski<br/>
+                Andrzej Wodynski
+            </div>
+        </div>
+        <span id="bestScore">best score: </span>
         <script>
-            var gameMainLoop = false;
-            document.getElementById('play').addEventListener('click', function(){
+            var gameMainLoop = true;
+            function play(){
                 var timeDelay=gameMainLoop?0:200;
-                document.body.className = gameMainLoop? "menu":"";
-
-                setTimeout(function(){gameMainLoop=!gameMainLoop;}, timeDelay);
+                document.body.className = '';
+                startNewGame();
+                setTimeout(function(){gameMainLoop=true;}, timeDelay);
+            }
+            document.getElementById('play').addEventListener('touchstart', play);
+            document.getElementById('replay').addEventListener('touchstart', play);
+            document.getElementById('credits').addEventListener('touchstart', function(){
+                document.body.className = 'menu';
             });
+            document.getElementById('btnCredits').addEventListener('touchstart', function(){
+                document.body.className = 'credits';
+            });
+            document.getElementById('goToMenu').addEventListener('touchstart', function(){
+                document.body.className = 'menu';
+            });
+
         </script>
 
         <script>
@@ -49,7 +72,7 @@
             ////////////////
 
             var velocity = 5;
-            var initialLevelSpeed = 8;
+            var initialLevelSpeed = 5;
 
 
 
@@ -60,21 +83,27 @@
             var eggImg = new Image();
             var treeImg = new Image();
             var snowImg = new Image();
-            var eggcrash = {count:44,img:[]};
+            var eggcrash = {count:20,img:[new Image()]};
             eggImg.src = 'img/egg.png';
             treeImg.src = 'img/tree.png';
             snowImg.src = 'img/snow.jpg';
+            snowImg.onload=function(){
+                snowBuffer.drawImage(snowImg, 0, 0);
+            };
 
             for(i=1; i<=eggcrash.count; i++) {
                 var newImg = new Image();
-                newImg.src='img/crash/'+Math.floor(i/2)+'.png';
+                newImg.src='img/crash/'+i+'.png';
                 eggcrash.img.push(newImg);
             }
 
             var crashMP3 = new Audio("sound/crash.mp3"); // buffers automatically when created
-
-
-
+            var audio = new Audio('sound/DarkTimes.mp3'); 
+            audio.addEventListener('ended', function() {
+                this.currentTime = 0;
+                this.play();
+            }, false);
+            audio.play();
             //////////////////////
             /// INITIALIZE
             //////////////////////
@@ -83,6 +112,11 @@
             canvas.width = window.innerWidth;
             canvas.height = window.innerHeight;
             var ctx = canvas.getContext('2d');
+
+            var snowCanvas = document.createElement('canvas');
+            snowCanvas.width = window.innerWidth;
+            snowCanvas.height = window.innerHeight*2;
+            var snowBuffer = snowCanvas.getContext('2d');
 
             var bestScore = window.localStorage.getItem('bestScore');
             if (!bestScore) {
@@ -110,6 +144,7 @@
             //////////////////////
 
             var startNewGame = function () {
+                player = initializePlayer();
                 document.getElementById('bestScore').innerHTML = 'best score: ' + window.localStorage.getItem('bestScore');
                 currentObstacles = [];
                 levelSpeed= initialLevelSpeed;
@@ -132,6 +167,7 @@
                     window.localStorage.setItem("bestScore", currentScore);
                     bestScore=currentScore;
                 }
+                document.getElementById('bestScore').innerHTML = 'best score: ' + window.localStorage.getItem('bestScore');
             }
 
             canvas.addEventListener('touchstart', function () {
@@ -157,12 +193,32 @@
                     drawObstacles[type](el2[0], el2[1], height);
                 }
             }
-            var drawSnow = function(offset){
-                ctx.save();
-                ctx.translate(0, offset);
-                ctx.drawImage(snowImg, 0, 0);
-                ctx.restore();
-            }
+            var drawSnow = (function(){
+                var tempOffset=0;
+                return function(offset){
+                    console.log(offset);
+                    if(tempOffset>offset){
+                        snowBuffer.drawImage(snowCanvas, 0, 1920);
+                        snowBuffer.drawImage(snowImg, 0, 0, 1080, 1920, 0, 0, 1080, 1920);
+                    }
+                    tempOffset=offset;
+                    snowBuffer.save();
+                    snowBuffer.translate(0, -offset+1920);
+                    snowBuffer.translate(player.x, player.y);
+                    snowBuffer.rotate(player.rotation); 
+                    snowBuffer.fillStyle = 'rgba(228, 228, 228, 1) ';
+            //         27 -5px
+            // 67  -5px
+                    snowBuffer.fillRect(-(eggImg.width/2)+27, 0, 5, 10);
+                    snowBuffer.fillRect(-(eggImg.width/2)+67, 0, 5, 10);
+                    snowBuffer.restore();
+                    ctx.save();
+                    ctx.translate(0, offset-1920);
+                //ctx.drawImage(snowImg, 0, 0);
+                    ctx.drawImage(snowCanvas, 0, 0);
+                    ctx.restore();
+                };
+            })();
 
             var obstacleParams = [
                 {height: 197},
@@ -171,7 +227,7 @@
             
             var drawObstacles = [
                 function (x1, x2, y) {
-                     //ctx.fillRect(x1, y, x2-x1, obstacleParams[0].height);
+                    //ctx.fillRect(x1+30, y+130, x2-x1-60, obstacleParams[0].height-130);
                     ctx.save();
                     ctx.translate(x1!==0?x1:-treeImg.width + x2, y);
                     ctx.drawImage(treeImg, 0, 0);
@@ -179,7 +235,7 @@
                 },
 
                 function (x1, x2, y) {
-                    //ctx.fillRect(x1, y, x2-x1, obstacleParams[1].height);
+                    //ctx.fillRect(x1+30, y+130, x2-x1-60, obstacleParams[1].height-130);
                     ctx.save();
                     ctx.translate(x1!==0?x1:-treeImg.width + x2, y);
                     ctx.drawImage(treeImg, 0, 0);
@@ -196,11 +252,12 @@
                     crash++;
                     if(eggcrash.count<=crash){
                         //document.getElementById('play').click();
+                        gameMainLoop = false;
+                        document.getElementById('score').innerHTML='score: ' + currentScore;
                         document.body.className = 'crash';
                         //startNewGame();
-                    } else {
-                        ctx.drawImage(eggcrash.img[crash], -(eggImg.width/2), -(eggImg.height/2));
                     }
+                    ctx.drawImage(eggcrash.img[crash], -(eggImg.width/2), -(eggImg.height/2));
                 }else {
                     ctx.drawImage(eggImg, -(eggImg.width/2), -(eggImg.height/2));
                 }
@@ -216,15 +273,15 @@
                 ctx.save();
                 ctx.beginPath();
                 ctx.arc(centerX, centerY, radius, 0, 2 * Math.PI, false);
-                ctx.fillStyle = '#92edf8';
+                ctx.fillStyle = 'rgba(146, 237, 248, .4)';
                 ctx.fill();
 
                 ctx.lineWidth = canvas.width / 40;
-                ctx.strokeStyle = '#2d8f9b';
+                ctx.strokeStyle = 'rgba(146, 237, 248, .4)';
                 ctx.stroke();
 
                 var fontSize = canvas.width / 5;
-                ctx.fillStyle = '#2d8f9b';
+                ctx.fillStyle = 'rgba(45, 143, 155, .4)';
                 ctx.font = fontSize + 'px Georgia';
                 ctx.textAlign = 'center';
                 ctx.fillText(currentScore, centerX, centerY + fontSize / 4 );
@@ -237,15 +294,19 @@
             ////////////////////
 
             var isColliding = function (player, ob, obPosition, obHeight) {
+                obPosition+=130;
+                obHeight-=130;
+                var ob0=ob[0]+30;
+                var ob1=ob[1]-30;
                 return !(
                     //above
                     player.y >= obPosition && (player.y - player.height/2) > (obPosition + obHeight)  ||
                     //below
                     player.y < obPosition && (player.y + player.height/2) < obPosition ||
                     //right
-                    player.x > ob[0] && player.x - player.width /2 > ob[1] ||
+                    player.x > ob0 && player.x - player.width /2 > ob1 ||
                     //left
-                    player.x < ob[1] && player.x + player.width /2 < ob[0]
+                    player.x < ob1 && player.x + player.width /2 < ob0
                 );
             };
 
@@ -317,7 +378,7 @@
 
 
             var updateScore = function () {
-                currentScore=Math.floor((levelPosition-200)/(8*120));
+                currentScore=Math.floor((levelPosition-600)/(8*120));
                 if(currentScore<0)currentScore=0;
             };
 
@@ -327,7 +388,7 @@
                 ctx.clearRect(0,0, canvas.width, canvas.height);
                 if(!crash)updatePlayerPosition(player);
                 if(!crash)updatePlayerRotation(player);
-                drawSnow(levelPosition % 1920 - 1920);
+                drawSnow(levelPosition % 1920);// - 1920);
                 updateScore();
                 checkColisions();
                 drawScore()
@@ -405,7 +466,7 @@
             // start game loop
             startNewGame();
             update();
+            gameMainLoop = false;
         </script>
-        <script type="text/javascript" src="cordova.js"></script>
     </body>
 </html>
