@@ -6,6 +6,7 @@
 <!--        <script src="bower_components/platform/platform.js"></script>-->
         <link rel="stylesheet" type="text/css" href="style.css">
         <script type="text/javascript" src="cordova.js"></script>
+        <script type="text/javascript" src="bower_components/fpsmeter/dist/fpsmeter.min.js"></script>
     </head>
     <body class="menu">
         <canvas id="gamePanel"></canvas>
@@ -117,8 +118,8 @@
             var snowCanvas = document.createElement('canvas');
             snowCanvas.width = 1080;//window.innerWidth;
             snowCanvas.height = 1920*2;//window.innerHeight*2;
-            // alert(window.innerHeight);
             var snowBuffer = snowCanvas.getContext('2d');
+            var meter = new FPSMeter();
 
             var bestScore = window.localStorage.getItem('bestScore');
             if (!bestScore) {
@@ -200,8 +201,8 @@
                         // snowBuffer.drawImage(snowImg, 0, 0, 1080, 1920, 0, 0, 1080, 1920);
                 return function(offset){
                     if(tempOffset>offset){
-                        snowBuffer.drawImage(snowCanvas, 0, 1920);
-                        snowBuffer.drawImage(snowImg, 0, 0, 1080, 1920, 0, 0, 1080, 1920);
+//                        snowBuffer.drawImage(snowCanvas, 0, 1920);
+//                        snowBuffer.drawImage(snowImg, 0, 0, 1080, 1920, 0, 0, 1080, 1920);
                     }
                     tempOffset=offset;
                     snowBuffer.save();
@@ -215,11 +216,12 @@
                     snowBuffer.fillRect(-(eggImg.width/2)+67, 0, 5, 10);
                     snowBuffer.restore();
                     //document.getElementById('test').src = snowCanvas.toDataURL();
-                    ctx.save();
-                    ctx.translate(0, offset-1920);
-                //ctx.drawImage(snowImg, 0, 0);
-                    ctx.drawImage(snowCanvas, 0, 0);
-                    ctx.restore();
+//                    ctx.save();
+//                    ctx.translate(0, offset-1920);
+//                    ctx.drawImage(snowCanvas, 0, 0);
+//                    ctx.restore();
+                    ctx.fillStyle = '#f7f7f7'
+                    ctx.fillRect(0,0,canvas.width, canvas.height);
 
                 };
             })();
@@ -251,7 +253,7 @@
                 ctx.save();
                 ctx.translate(player.x, player.y);
                 ctx.rotate(player.rotation); 
-                console.log(Math.cos(player.rotation));
+
                 if(crash){
                     if(crash===1)crashMP3.play();
                     crash++;
@@ -351,7 +353,7 @@
 
             var updateLevel = function () {
                 currentHeight += 1;
-                levelPosition+=levelSpeed*Math.cos(player.rotation);
+                levelPosition+=levelSpeed //*Math.cos(player.rotation);
 
                 if (currentHeight % 120 === 1) {
                     var newObstacle = translatedLevel[nextObstacleIdx];
@@ -369,7 +371,7 @@
                 for (var i = currentObstacles.length -1 ; i>=0; i--) {
                     drawObstacle(currentObstacles[i].obstacle, currentObstacles[i].position);
 
-                    var nextObstaclePosition = currentObstacles[i].position + levelSpeed*Math.cos(player.rotation);
+                    var nextObstaclePosition = currentObstacles[i].position + levelSpeed //*Math.cos(player.rotation);
 
                     if (nextObstaclePosition >= canvas.height) {
                         currentObstacles.splice(i, 1);
@@ -388,6 +390,7 @@
             };
 
             var update = function () {
+                meter.tickStart();
                 window.requestAnimationFrame(update);
                 if(!gameMainLoop) return;
                 ctx.clearRect(0,0, canvas.width, canvas.height);
@@ -399,6 +402,7 @@
                 drawScore()
                 drawPlayer(player);
                 updateLevel();
+                meter.tick();
             };
 
 
